@@ -8,6 +8,7 @@ use base qw/Agave::Client::Base/;
 use Agave::Client::Object::Job ();
 use Agave::Client::Object::OutputFile ();
 use Try::Tiny;
+use File::Temp;
 
 use Data::Dumper;
 
@@ -92,7 +93,7 @@ sub submit_job {
 			#	$/;
 			#$available_options{$opt->{id}} = $opt;
 			if (defined $params{$opt->{id}} && $params{$opt->{id}} ne "") {
-				$post_content{ $opt->{id} } = $params{$opt->{id}};
+				$post_content{$opt_group}{ $opt->{id} } = $params{$opt->{id}};
 			}
 			elsif (defined $opt->{required} && $opt->{required}) {
 				$required_options{$opt->{id}} = $opt_group;
@@ -104,8 +105,18 @@ sub submit_job {
 		return $self->_error("Missing required argument(s)", \%required_options);
 	}
 
+	my $tmp = File::Temp->new();
+	my $filename=$tmp->filename;
+	print $tmp JSON->new->encode(\%post_content);
+	$tmp->close;
+
+	my %post_params=(
+		_content_type	=> 'form-data',
+		_body	=> {fileToUpload => [$filename]},
+	);
+
 	my $resp = try {
-            $self->do_post('/', %post_content);
+            $self->do_post('/', %post_params);
         }
         catch {
             if (ref($_) && $_->isa('Agave::Exceptions::HTTPError')) {
