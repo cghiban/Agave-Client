@@ -2,7 +2,7 @@
 
 use Test::More;
 
-my $TNUM = 16;
+my $TNUM = 21;
 plan tests => $TNUM;
 
 use File::Temp ();
@@ -112,6 +112,23 @@ SKIP: {
         unless( $st->{status} eq 'success' );
 
     ok ( $st, "Directory removed successfully");
+
+    # let's test limits and offsets; / folder should have plenty of entries...
+    my $list1 = $io->readdir("/", limit => 15);
+    if (my $err = $@) { diag(ref $err ? $err->message . "\n" . $err->content : $err); }
+    ok( 'ARRAY' eq ref $list1, "IO response is valid (using limit)");
+    is(scalar(@$list1), 15, "Got top 15 files/directories");
+
+    my $list2 = $io->readdir("/", limit => 15, offset => 10);
+    if (my $err = $@) { diag(ref $err ? $err->message . "\n" . $err->content : $err); }
+    ok( 'ARRAY' eq ref $list2, "IO response is valid (using limit and offset)");
+    is(scalar(@$list2), 15, "Got 15 files/directories");
+
+    my @names1 = map {$_->{name}} @$list1;
+    my @names2 = map {$_->{name}} @$list2;
+
+    # last 5 items in @list1 should be first 5 in @list2
+    is(splice(@names1, 10, 5), splice(@names2, 0, 5), "File names lists overlap (using limit and offset)");
 
 }
 
