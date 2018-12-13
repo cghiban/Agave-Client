@@ -9,11 +9,11 @@ Agave::Client - A Perl wrapper for Agave API!
 
 =head1 VERSION
 
-Version 0.5
+Version 0.6
 
 =cut
 
-our $VERSION = '0.5';
+our $VERSION = '0.6';
 
 use base 'Agave::Client::Base';
 
@@ -25,6 +25,7 @@ use Agave::Client::Metadata ();
 use Agave::Client::MetadataSchema ();
 use Agave::Client::PostIt ();
 use Agave::Client::Profile ();
+use Agave::Client::System ();
 
 # Needed to emit the curl-compatible form when DEBUG is enabled
 use URI::Escape;
@@ -202,6 +203,11 @@ sub postit {
 sub profile {
 	my $self = shift;
 	return Agave::Client::Profile->new($self);
+}
+
+sub system {
+	my $self = shift;
+	return Agave::Client::System->new($self);
 }
 
 sub token_expiration_in {
