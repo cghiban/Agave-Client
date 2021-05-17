@@ -65,7 +65,6 @@ sub submit_job {
 	my %required_options = ();
 	my %available_options = ();
 
-	# fix jobName
 	if (defined $params{name} && $params{name} ne "") {
 		$params{name} =~ s|/+||g;
 		$params{name} =~ s|^\d|N|;
@@ -117,6 +116,8 @@ sub submit_job {
 		my $type = $p->{semantics} && $p->{semantics}->{ontology}
 			? join(",", map {$_=~s/xs://;$_;} @{$p->{semantics}->{ontology}})
 			: 'string';
+		#print STDERR '****', Dumper( $p), $/;
+		#print STDERR '**** type: ', $type, $/;
 		if ($type =~ /boolean/) {
 			if (!defined $post_content{parameters}->{$p->{id}}) {
 				$post_content{parameters}->{$p->{id}} = \0;  # make it false
@@ -329,11 +330,19 @@ sub share_job {
     $perm ||= "READ";
     return unless ($job_id && $username);
 
-    my $path = join("/", "", $job_id, "pems", $username);
+    my $path = join("/", "", $job_id, "pems");
 
     return unless $perm =~ /^(?:READ|WRITE|READ_WRITE|ALL|NONE)$/i;
 
-    $self->do_post($path, permission => uc $perm);
+	my %post_content = (
+		username => $username,
+		permission => $perm,
+	);
+	my $json = Cpanel::JSON::XS->new->utf8;
+	$self->do_post($path,
+			_content_type => 'application/json; charset=utf-8',
+			_body => $json->encode(\%post_content)
+	);
 }
 
 =head2 stop_job
